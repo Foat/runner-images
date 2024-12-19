@@ -7,6 +7,10 @@ on:
     branches:
       - prime
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   release-default:
     runs-on: ubuntu-latest
@@ -20,12 +24,12 @@ jobs:
       - name: Set up Docker BuildX
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to DockerHub
+      - name: Login to registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.PACKAGE_TOKEN }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get Meta
         id: meta
@@ -33,6 +37,11 @@ jobs:
           echo IMAGE_CREATED=$(date -u +'%Y-%m-%dT%H:%M:%SZ') | tee -a $GITHUB_OUTPUT
           echo IMAGE_VERSION=$(date -u +'v%y.%m.%d') | tee -a $GITHUB_OUTPUT
           echo IMAGE_REVISION=$(git rev-parse HEAD) | tee -a $GITHUB_OUTPUT
+
+      - name: Get node version
+        id: node
+        run: |
+          echo NODE_FOLDER=$(docker run --rm --entrypoint=/bin/bash ghcr.io/catthehacker/ubuntu:js-latest -c 'find /opt/acttoolcache/node -maxdepth 1 -type d -name "20*"') | tee -a $GITHUB_OUTPUT
 
       - name: Build and push default 24.04
         uses: docker/build-push-action@v6
@@ -44,16 +53,16 @@ jobs:
             linux/arm64
           pull: true
           push: true
-          no-cache: true
           build-args: |
-            BASE_IMAGE_TAG=act-24.04
+            BASE_IMAGE_TAG=js-24.04
             IMAGE_VERSION=${{ steps.meta.outputs.IMAGE_VERSION }}
             IMAGE_CREATED=${{ steps.meta.outputs.IMAGE_CREATED }}
             IMAGE_REVISION=${{ steps.meta.outputs.IMAGE_REVISION }}
+            NODE_FOLDER=${{ steps.node.outputs.NODE_FOLDER }}
           tags: |
-            Foat/runner-images:ubuntu-24.04
-            Foat/runner-images:ubuntu-24.04-${{ steps.meta.outputs.IMAGE_VERSION }}
-            Foat/runner-images:ubuntu-latest
+            ghcr.io/frozen-tapestry/runner-images:ubuntu-24.04
+            ghcr.io/frozen-tapestry/runner-images:ubuntu-24.04-${{ steps.meta.outputs.IMAGE_VERSION }}
+            ghcr.io/frozen-tapestry/runner-images:ubuntu-latest
 
       - name: Build and push default 22.04
         uses: docker/build-push-action@v6
@@ -65,12 +74,12 @@ jobs:
             linux/arm64
           pull: true
           push: true
-          no-cache: true
           build-args: |
-            BASE_IMAGE_TAG=act-22.04
+            BASE_IMAGE_TAG=js-22.04
             IMAGE_VERSION=${{ steps.meta.outputs.IMAGE_VERSION }}
             IMAGE_CREATED=${{ steps.meta.outputs.IMAGE_CREATED }}
             IMAGE_REVISION=${{ steps.meta.outputs.IMAGE_REVISION }}
+            NODE_FOLDER=${{ steps.node.outputs.NODE_FOLDER }}
           tags: |
-            Foat/runner-images:ubuntu-22.04
-            Foat/runner-images:ubuntu-22.04-${{ steps.meta.outputs.IMAGE_VERSION }}
+            ghcr.io/frozen-tapestry/runner-images:ubuntu-22.04
+            ghcr.io/frozen-tapestry/runner-images:ubuntu-22.04-${{ steps.meta.outputs.IMAGE_VERSION }}
