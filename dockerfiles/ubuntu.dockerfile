@@ -18,5 +18,5 @@ LABEL org.opencontainers.image.created="${IMAGE_CREATED}" \
       org.opencontainers.image.title="Frozen Tapestry Actions runner images" \
       org.opencontainers.image.description="Docker images used by act_runner to run workflows"
 
-ENV PATH="$NODE_FOLDER:$PATH" \
+ENV PATH="$NODE_FOLDER/x64/bin:$PATH" \
     DEBIAN_FRONTEND=noninteractive
